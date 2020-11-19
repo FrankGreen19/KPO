@@ -84,7 +84,8 @@ public class ArticleRepository implements IRestRepository<Article> {
 
                 PreparedStatement statement = connection.
                         prepareStatement("INSERT INTO article(article_type_id, author_id, article_header, article_main, article_date, article_priority) VALUES " +
-                                "(cast(? as integer ), cast(? as integer), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as date), cast(? as boolean))");
+                                "(cast(? as integer ), cast(? as integer), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as date), cast(? as boolean)) " +
+                                "RETURNING article_id, article_type_id, author_id, article_header, article_main, article_date, article_priority");
                 statement.setInt(1, entity.getArticleTypeId());
                 statement.setInt(2, entity.getAuthorId());
                 statement.setString(3, entity.getHeader());
@@ -92,7 +93,16 @@ public class ArticleRepository implements IRestRepository<Article> {
                 statement.setString(5, String.valueOf(entity.getDate()));
                 statement.setBoolean(6, entity.isPriority());
 
-                statement.executeUpdate();
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    entity.setId(resultSet.getInt("article_id"));
+                    entity.setArticleTypeId(resultSet.getInt("article_type_id"));
+                    entity.setAuthorId(resultSet.getInt("author_id"));
+                    entity.setHeader(resultSet.getString("article_header"));
+                    entity.setMain(resultSet.getString("article_main"));
+                    entity.setDate(resultSet.getDate("article_date"));
+                    entity.setPriority(resultSet.getBoolean("article_priority"));
+                }
 
                 connection.close();
                 return entity;
@@ -114,7 +124,9 @@ public class ArticleRepository implements IRestRepository<Article> {
                         "article_main = cast(? as varchar), " +
                         "article_date = cast(? as date), " +
                         "article_priority = cast(? as boolean) " +
-                        "WHERE article_id = cast(? as integer)");
+                        "WHERE article_id = cast(? as integer) RETURNING " +
+                        "article_type_id, author_id, article_header, " +
+                        "article_main, article_date, article_priority");
         statement.setInt(1, entity.getArticleTypeId());
         statement.setInt(2, entity.getAuthorId());
         statement.setString(3, entity.getHeader());
@@ -123,7 +135,15 @@ public class ArticleRepository implements IRestRepository<Article> {
         statement.setBoolean(6, entity.isPriority());
         statement.setInt(7, id);
 
-        System.out.println(statement.execute());
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setArticleTypeId(resultSet.getInt("article_type_id"));
+            entity.setAuthorId(resultSet.getInt("author_id"));
+            entity.setHeader(resultSet.getString("article_header"));
+            entity.setMain(resultSet.getString("article_main"));
+            entity.setDate(resultSet.getDate("article_date"));
+            entity.setPriority(resultSet.getBoolean("article_priority"));
+        }
 
         connection.close();
         return entity;
@@ -133,15 +153,25 @@ public class ArticleRepository implements IRestRepository<Article> {
     public Article delete(Integer id) throws SQLException {
         Connection connection = DatabaseHandler.getDbConnection();
 
-        Article article = this.select(id);
+        Article entity = new Article(id);
 
         PreparedStatement statement = connection.
-                prepareStatement("DELETE FROM article WHERE article_id = cast(? as integer)");
+                prepareStatement("DELETE FROM article WHERE article_id = cast(? as integer) " +
+                        "RETURNING article_type_id, author_id, article_header," +
+                        "article_main, article_date, article_priority");
         statement.setInt(1, id);
 
-        statement.execute();
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setArticleTypeId(resultSet.getInt("article_type_id"));
+            entity.setAuthorId(resultSet.getInt("author_id"));
+            entity.setHeader(resultSet.getString("article_header"));
+            entity.setMain(resultSet.getString("article_main"));
+            entity.setDate(resultSet.getDate("article_date"));
+            entity.setPriority(resultSet.getBoolean("article_priority"));
+        }
 
         connection.close();
-        return article;
+        return entity;
     }
 }

@@ -64,9 +64,15 @@ public class ArticleTypeRepository implements IRestRepository<ArticleType> {
 
         PreparedStatement statement = connection.
                 prepareStatement("INSERT INTO article_type(article_type_name) VALUES " +
-                        "(cast(? as VARCHAR))");
+                        "(cast(? as VARCHAR)) " +
+                        "RETURNING article_type_id, article_type_name");
         statement.setString(1, entity.getName());
-        System.out.println(statement.executeUpdate());
+
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setId(resultSet.getInt("article_type_id"));
+            entity.setName(resultSet.getString("article_type_name"));
+        }
 
         connection.close();
         return entity;
@@ -79,11 +85,15 @@ public class ArticleTypeRepository implements IRestRepository<ArticleType> {
         PreparedStatement statement = connection.
                 prepareStatement("UPDATE article_type SET " +
                         "article_type_name = cast(? as varchar)" +
-                        "WHERE article_type_id = cast(? as integer)");
+                        "WHERE article_type_id = cast(? as integer) RETURNING " +
+                        "article_type_name");
         statement.setString(1, entity.getName());
         statement.setInt(2, id);
 
-        System.out.println(statement.execute());
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setName(resultSet.getString("article_type_name"));
+        }
 
         connection.close();
         return entity;
@@ -93,15 +103,19 @@ public class ArticleTypeRepository implements IRestRepository<ArticleType> {
     public ArticleType delete(Integer id) throws SQLException {
         Connection connection = DatabaseHandler.getDbConnection();
 
-        ArticleType articleType = this.select(id);
+        ArticleType entity = new ArticleType(id);
 
         PreparedStatement statement = connection.
-                prepareStatement("DELETE FROM article_type WHERE article_type_id = cast(? as integer)");
+                prepareStatement("DELETE FROM article_type WHERE article_type_id = cast(? as integer) " +
+                        "RETURNING article_type_name");
         statement.setInt(1, id);
 
-        statement.execute();
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setName(resultSet.getString("article_type_name"));
+        }
 
         connection.close();
-        return articleType;
+        return entity;
     }
 }

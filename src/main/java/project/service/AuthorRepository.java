@@ -74,12 +74,20 @@ public class AuthorRepository implements IRestRepository<Author>{
             if (this.select(entity.getId()) == null) {
                 PreparedStatement statement = connection.
                         prepareStatement("INSERT INTO author(author_id, author_name, author_surname, author_article_num) VALUES " +
-                                "(cast(? as integer ), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as integer))");
+                                "(cast(? as integer ), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as integer)) " +
+                                "RETURNING author_id, author_name, author_surname, author_article_num");
                 statement.setInt(1, entity.getId());
                 statement.setString(2, entity.getName());
                 statement.setString(3, entity.getSurname());
                 statement.setInt(4, entity.getArticle_num());
-                System.out.println(statement.executeUpdate());
+
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    entity.setId(resultSet.getInt("author_id"));
+                    entity.setName(resultSet.getString("author_name"));
+                    entity.setSurname(resultSet.getString("author_surname"));
+                    entity.setArticle_num(resultSet.getInt("author_article_num"));
+                }
 
                 connection.close();
                 return entity;
@@ -99,13 +107,19 @@ public class AuthorRepository implements IRestRepository<Author>{
                         "author_name = cast(? as varchar), " +
                         "author_surname = cast(? as varchar)," +
                         "author_article_num = cast(? as integer) " +
-                        "WHERE author_id = cast(? as integer )");
+                        "WHERE author_id = cast(? as integer ) RETURNING " +
+                        "author_name, author_surname, author_article_num");
         statement.setString(1, entity.getName());
         statement.setString(2, entity.getSurname());
         statement.setInt(3, entity.getArticle_num());
         statement.setInt(4, id);
 
-        System.out.println(statement.execute());
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setName(resultSet.getString("author_name"));
+            entity.setSurname(resultSet.getString("author_surname"));
+            entity.setArticle_num(resultSet.getInt("author_article_num"));
+        }
 
         connection.close();
         return entity;
@@ -115,16 +129,22 @@ public class AuthorRepository implements IRestRepository<Author>{
     public Author delete(Integer id) throws SQLException {
         Connection connection = DatabaseHandler.getDbConnection();
 
-        Author author = this.select(id);
+        Author entity = new Author(id);
 
         PreparedStatement statement = connection.
-                prepareStatement("DELETE FROM author WHERE author_id = cast(? as integer)");
+                prepareStatement("DELETE FROM author WHERE author_id = cast(? as integer) RETURNING " +
+                        "author_name, author_surname, author_article_num");
         statement.setInt(1, id);
 
-        statement.execute();
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setName(resultSet.getString("author_name"));
+            entity.setSurname(resultSet.getString("author_surname"));
+            entity.setArticle_num(resultSet.getInt("author_article_num"));
+        }
 
         connection.close();
-        return author;
+        return entity;
     }
 
 }

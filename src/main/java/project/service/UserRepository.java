@@ -72,13 +72,21 @@ public class UserRepository implements IRestRepository<User>{
 
         PreparedStatement statement = connection.
                 prepareStatement("INSERT INTO usr(user_email, user_password, user_phone, user_agreement) VALUES " +
-                        "(cast(? as VARCHAR), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as boolean))");
+                        "(cast(? as VARCHAR), cast(? as VARCHAR), cast(? as VARCHAR), cast(? as boolean))" +
+                        "RETURNING user_id, user_email, user_password, user_phone, user_agreement");
         statement.setString(1, entity.getEmail());
         statement.setString(2, entity.getPassword());
         statement.setString(3, entity.getPhone());
         statement.setBoolean(4, entity.isAgreement());
 
-        System.out.println(statement.executeUpdate());
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setId(resultSet.getInt("user_id"));
+            entity.setEmail(resultSet.getString("user_email"));
+            entity.setPassword(resultSet.getString("user_password"));
+            entity.setPhone(resultSet.getString("user_phone"));
+            entity.setAgreement(resultSet.getBoolean("user_agreement"));
+        }
 
         connection.close();
         return entity;
@@ -94,14 +102,21 @@ public class UserRepository implements IRestRepository<User>{
                         "user_password = cast(? as varchar)," +
                         "user_phone = cast(? as varchar)," +
                         "user_agreement = cast(? as boolean)" +
-                        "WHERE user_id = cast(? as integer)");
+                        "WHERE user_id = cast(? as integer)" +
+                        "RETURNING user_email, user_password, user_phone, user_agreement");
         statement.setString(1, entity.getEmail());
         statement.setString(2, entity.getPassword());
         statement.setString(3, entity.getPhone());
         statement.setBoolean(4, entity.isAgreement());
         statement.setInt(5, id);
 
-        statement.execute();
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setEmail(resultSet.getString("user_email"));
+            entity.setPassword(resultSet.getString("user_password"));
+            entity.setPhone(resultSet.getString("user_phone"));
+            entity.setAgreement(resultSet.getBoolean("user_agreement"));
+        }
 
         connection.close();
         return entity;
@@ -111,16 +126,22 @@ public class UserRepository implements IRestRepository<User>{
     public User delete(Integer id) throws SQLException {
         Connection connection = DatabaseHandler.getDbConnection();
 
-        User user = this.select(id);
-
         PreparedStatement statement = connection.
-                prepareStatement("DELETE FROM usr WHERE user_id = cast(? as integer) RETURNING *");
+                prepareStatement("DELETE FROM usr WHERE user_id = cast(? as integer) RETURNING " +
+                        "RETURNING user_email, user_password, user_phone, user_agreement");
         statement.setInt(1, id);
 
-        statement.execute();
+        User entity = new User(id);
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setEmail(resultSet.getString("user_email"));
+            entity.setPassword(resultSet.getString("user_password"));
+            entity.setPhone(resultSet.getString("user_phone"));
+            entity.setAgreement(resultSet.getBoolean("user_agreement"));
+        }
 
         connection.close();
-        return user;
+        return entity;
     }
 
 

@@ -9,8 +9,8 @@ public class User extends BaseEntity{
     private String phone;
     private boolean agreement;
 
-    public User() {
-        super(null);
+    public User(int id) {
+        super(id);
     }
 
     public User(int id, String email, String password, String phone, boolean agreement) {

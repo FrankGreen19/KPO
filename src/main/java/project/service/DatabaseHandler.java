@@ -3,7 +3,7 @@ package project.service;
 import java.sql.*;
 
 public class DatabaseHandler {
-    static final String DB_URL = "jdbc:postgresql://127.0.0.1:5432/kpo";
+    static final String DB_URL = "jdbc:postgresql://127.0.0.1:5433/kpo";
     static final String USER = "postgres";
     static final String PASS = "root";
 

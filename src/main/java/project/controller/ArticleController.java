@@ -6,6 +6,7 @@ import project.model.Article;
 import project.resource.ArticleResource;
 import project.service.ArticleRepository;
 
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ public class ArticleController {
 
     @Autowired
     ArticleRepository articleRepository;
+
 
     @GetMapping("")
     List<ArticleResource> getAll() throws SQLException {

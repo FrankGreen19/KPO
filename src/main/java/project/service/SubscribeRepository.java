@@ -75,12 +75,19 @@ public class SubscribeRepository implements IRestRepository<Subscribe> {
 
                 PreparedStatement statement = connection.
                         prepareStatement("INSERT INTO subscribe(user_id, subscribe_type_id, subscribe_date_begin) VALUES " +
-                                "(cast(? as integer ), cast(? as integer), cast(? as date))");
+                                "(cast(? as integer ), cast(? as integer), cast(? as date)) " +
+                                "RETURNING subscribe_id, subscribe_type_id, user_id, subscribe_date_begin ");
                 statement.setInt(1, entity.getUserId());
                 statement.setInt(2, entity.getTypeId());
                 statement.setString(3, String.valueOf(entity.getSubDateBegin()));
 
-                statement.executeUpdate();
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    entity.setId(resultSet.getInt("subscribe_id"));
+                    entity.setTypeId(resultSet.getInt("subscribe_type_id"));
+                    entity.setUserId(resultSet.getInt("user_id"));
+                    entity.setSubDateBegin(resultSet.getDate("subscribe_date_begin"));
+                }
 
                 connection.close();
                 return entity;
@@ -99,13 +106,19 @@ public class SubscribeRepository implements IRestRepository<Subscribe> {
                         "subscribe_type_id = cast(? as integer), " +
                         "user_id = cast(? as integer)," +
                         "subscribe_date_begin = cast(? as date) " +
-                        "WHERE subscribe_id = cast(? as integer)");
+                        "WHERE subscribe_id = cast(? as integer)" +
+                        "RETURNING subscribe_type_id, user_id, subscribe_date_begin");
         statement.setInt(1, entity.getTypeId());
         statement.setInt(2, entity.getUserId());
         statement.setString(3, String.valueOf(entity.getSubDateBegin()));
         statement.setInt(4, id);
 
-        System.out.println(statement.execute());
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setTypeId(resultSet.getInt("subscribe_type_id"));
+            entity.setUserId(resultSet.getInt("user_id"));
+            entity.setSubDateBegin(resultSet.getDate("subscribe_date_begin"));
+        }
 
         connection.close();
         return entity;
@@ -115,15 +128,21 @@ public class SubscribeRepository implements IRestRepository<Subscribe> {
     public Subscribe delete(Integer id) throws SQLException {
         Connection connection = DatabaseHandler.getDbConnection();
 
-        Subscribe subscribe = this.select(id);
+        Subscribe entity = new Subscribe(id);
 
         PreparedStatement statement = connection.
-                prepareStatement("DELETE FROM subscribe WHERE subscribe_id = cast(? as integer)");
+                prepareStatement("DELETE FROM subscribe WHERE subscribe_id = cast(? as integer)" +
+                        "RETURNING subscribe_type_id, user_id, subscribe_date_begin");
         statement.setInt(1, id);
 
-        statement.execute();
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            entity.setTypeId(resultSet.getInt("subscribe_type_id"));
+            entity.setUserId(resultSet.getInt("user_id"));
+            entity.setSubDateBegin(resultSet.getDate("subscribe_date_begin"));
+        }
 
         connection.close();
-        return subscribe;
+        return entity;
     }
 }
